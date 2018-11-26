@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 from data import wider as cfg 
-from ..bbox_utils import match, log_sum_exp
+from ..bbox_utils import match, log_sum_exp,match_ssd
 
 
 class MultiBoxLoss(nn.Module):
@@ -36,7 +36,7 @@ class MultiBoxLoss(nn.Module):
         See: https://arxiv.org/pdf/1512.02325.pdf for more details.
     """
 
-    def __init__(self, num_classes, overlap_thresh, prior_for_matching,
+    def __init__(self, num_classes, overlap_thresh, gamma,
                  bkg_label, neg_mining, neg_pos, neg_overlap,
                  use_gpu=True):
         super(MultiBoxLoss, self).__init__()
@@ -44,7 +44,7 @@ class MultiBoxLoss(nn.Module):
         self.num_classes = num_classes
         self.threshold = overlap_thresh
         self.background_label = bkg_label
-        self.use_prior_for_matching = prior_for_matching
+        self.gamma = gamma
         self.do_neg_mining = neg_mining
         self.negpos_ratio = neg_pos
         self.neg_overlap = neg_overlap
@@ -93,7 +93,7 @@ class MultiBoxLoss(nn.Module):
         loc_p = loc_data[pos_idx].view(-1, 4)
         loc_t = loc_t[pos_idx].view(-1, 4)
         loss_l = F.smooth_l1_loss(loc_p, loc_t, size_average=False)
-
+        #print(loc_p)
         # Compute max conf across batch for hard negative mining
         batch_conf = conf_data.view(-1, self.num_classes)
         loss_c = log_sum_exp(batch_conf) - batch_conf.gather(1, conf_t.view(-1, 1))
@@ -119,4 +119,5 @@ class MultiBoxLoss(nn.Module):
         N = num_pos.data.sum()
         loss_l /= N
         loss_c /= N
+        loss_c*=self.gamma
         return loss_l, loss_c

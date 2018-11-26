@@ -1,2 +1,3 @@
 *.pyc
 *.pth
+log/

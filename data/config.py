@@ -6,7 +6,7 @@ from __future__ import print_function
 
 
 
-HOME = '/home/data/lj/'
+HOME = '/home/lijun/data/'
 
 
 MEANS = (104, 117, 123)
@@ -14,7 +14,7 @@ MEANS = (104, 117, 123)
 
 wider = {
     'num_classes': 2,
-    'lr_steps': (80000, 100000, 120000),
+    'lr_steps': (161000, 193200, 241500),
     'max_iter': 120000,
     'feature_maps': [160, 80, 40, 20, 10, 5],
     'min_dim':  640,

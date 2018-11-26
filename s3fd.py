@@ -92,7 +92,7 @@ class S3FD(nn.Module):
             x = self.vgg[k](x)
 
         s = self.L2Norm4_3(x)
-        sources.append(x)
+        sources.append(s)
 
         for k in range(23, 30):
             x = self.vgg[k](x)
@@ -111,11 +111,13 @@ class S3FD(nn.Module):
                 sources.append(x)
 
         # apply multibox head to source layers
+        
         loc_x = self.loc[0](sources[0])
         conf_x = self.conf[0](sources[0])
 
-        max_conf,_ = torch.max(conf_x[...,0:3],dim=-1,keepdim=True)
-        conf_x = torch.cat((max_conf,conf_x[...,3:]),dim=-1)
+        max_conf,_ = torch.max(conf_x[:,0:3,:,:],dim=1,keepdim=True)
+        conf_x = torch.cat((max_conf,conf_x[:,3:,:,:]),dim=1)
+
         loc.append(loc_x.permute(0,2,3,1).contiguous())
         conf.append(conf_x.permute(0,2,3,1).contiguous())
 
@@ -209,6 +211,7 @@ def multibox(vgg, extra_layers, num_classes):
     loc_layers = []
     conf_layers = []
     vgg_source = [21, 28, -2]
+    
     loc_layers += [nn.Conv2d(vgg[14].out_channels, 4,
                              kernel_size=3, padding=1)]
     conf_layers += [nn.Conv2d(vgg[14].out_channels,
@@ -238,10 +241,11 @@ def build_s3fd(phase, size=640, num_classes=2):
     base_, extras_, head_ = multibox(vgg(base[str(size)], 3),
                                      add_extras(extras[str(size)], 1024),
                                      num_classes)
+
     return S3FD(phase, size, base_, extras_, head_, num_classes)
 
 
 if __name__ == '__main__':
     net = build_s3fd('train', size=640, num_classes=2)
-    inputs = Variable(torch.randn(1, 3, 640, 640))
-    output = net(inputs)
+    #inputs = Variable(torch.randn(1, 3, 640, 640))
+    #output = net(inputs)

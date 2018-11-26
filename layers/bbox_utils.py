@@ -113,8 +113,8 @@ def match(threshold, truths, priors, variances, labels, loc_t, conf_t, idx):
         best_truth_idx[best_prior_idx[j]] = j
     _th1, _th2, _th3 = threshold  # _th1 = 0.1 ,_th2 = 0.35,_th3 = 0.5
 
-    N = (torch.sum(best_prior_overlap > _th2) +
-         torch.sum(best_prior_overlap > _th3)) // 2
+    N = (torch.sum(best_prior_overlap >= _th2) +
+         torch.sum(best_prior_overlap >= _th3)) // 2
 
     matches = truths[best_truth_idx]          # Shape: [num_priors,4]
     conf = labels[best_truth_idx] + 1         # Shape: [num_priors]
@@ -126,10 +126,12 @@ def match(threshold, truths, priors, variances, labels, loc_t, conf_t, idx):
     best_truth_overlap_clone[1 - add_idx] = 0
     stage2_overlap, stage2_idx = best_truth_overlap_clone.sort(descending=True)
 
-    N = torch.sum(stage2_overlap[0:N]) if torch.sum(
-        stage2_overlap[0:N]) < N else N
+    stage2_overlap = stage2_overlap.gt(_th1)
 
-    conf[stage2_idx[0:N]] += 1
+    if N > 0:
+        N = torch.sum(stage2_overlap[:N]) if torch.sum(
+            stage2_overlap[:N]) < N else N
+        conf[stage2_idx[:N]] += 1
 
     loc = encode(matches, priors, variances)
     loc_t[idx] = loc    # [num_priors,4] encoded offsets to learn
@@ -195,12 +197,14 @@ def encode(matched, priors, variances):
     """
 
     # dist b/t match center and prior's center
+    eps = 1e-5
     g_cxcy = (matched[:, :2] + matched[:, 2:]) / 2 - priors[:, :2]
     # encode variance
     g_cxcy /= (variances[0] * priors[:, 2:])
     # match wh / prior wh
     g_wh = (matched[:, 2:] - matched[:, :2]) / priors[:, 2:]
-    g_wh = torch.log(g_wh) / variances[1]
+    #g_wh = torch.log(g_wh) / variances[1]
+    g_wh = torch.log(g_wh+eps) / variances[1]
     # return target for smooth_l1_loss
     return torch.cat([g_cxcy, g_wh], 1)  # [num_priors,4]
 

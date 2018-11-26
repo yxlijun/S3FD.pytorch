@@ -106,8 +106,8 @@ class WIDERDetection(data.Dataset):
         '''
         target = boxes
         for bbox in target:
-        	left_up = (int(bbox[0]),int(bbox[1]))
-        	right_bottom = (int(bbox[2]),int(bbox[3]))
+        	left_up = (int(bbox[0]*640),int(bbox[1]*640))
+        	right_bottom = (int(bbox[2]*640),int(bbox[3]*640))
         	cv2.rectangle(img,left_up,right_bottom,(0,0,255),2)
         cv2.imshow('image',img)
         cv2.waitKey(0)
