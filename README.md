@@ -7,7 +7,7 @@ A PyTorch Implementation of Single Shot Scale-invariant Face Detector.
 * numpy 
 * easydict
 
-### P	repare WIDER data 
+### Prepare WIDER data 
 1. download wider face dataset 
 2. modify data/config.py wider face path
 3. ``` python prepare_wider_data.py ```
