@@ -60,3 +60,5 @@ python demo.py
 
 
 ### References
+* [S³FD: Single Shot Scale-invariant Face Detector](https://arxiv.org/abs/1708.05237)
+* [ssd.pytorch](https://github.com/amdegroot/ssd.pytorch)
