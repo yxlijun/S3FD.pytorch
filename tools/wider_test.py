@@ -56,7 +56,7 @@ def detect_face(net, img, shrink):
     x = Variable(torch.from_numpy(x).permute(2, 0, 1).unsqueeze(0))
     if use_cuda:
         x = x.cuda()
-    print(x.size())
+    #print(x.size())
     y = net(x)
     detections = y.data
     detections = detections.cpu().numpy()
@@ -206,7 +206,7 @@ if __name__ == '__main__':
             #                 (img.shape[0] * img.shape[1])) ** 0.5
 
             max_im_shrink = np.sqrt(
-                1800 * 1200 / (img.shape[0] * img.shape[1]))
+                1750 * 1200 / (img.shape[0] * img.shape[1]))
 
             shrink = max_im_shrink if max_im_shrink < 1 else 1
             counter += 1
@@ -234,12 +234,12 @@ if __name__ == '__main__':
                         0].encode('utf-8'), im_name + '.txt'), 'w')
             fout.write('{:s}\n'.format(event[0][0].encode(
                 'utf-8') + '/' + im_name + '.jpg'))
-            fout.write('{:d}\n'.format(det.shape[0]))
-            for i in xrange(det.shape[0]):
-                xmin = det[i][0]
-                ymin = det[i][1]
-                xmax = det[i][2]
-                ymax = det[i][3]
-                score = det[i][4]
+            fout.write('{:d}\n'.format(dets.shape[0]))
+            for i in xrange(dets.shape[0]):
+                xmin = dets[i][0]
+                ymin = dets[i][1]
+                xmax = dets[i][2]
+                ymax = dets[i][3]
+                score = dets[i][4]
                 fout.write('{:.1f} {:.1f} {:.1f} {:.1f} {:.3f}\n'.
                            format(xmin, ymin, (xmax - xmin + 1), (ymax - ymin + 1), score))
