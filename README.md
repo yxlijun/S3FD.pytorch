@@ -14,33 +14,32 @@ A PyTorch Implementation of Single Shot Scale-invariant Face Detector.
 
 ### train 
 ``` 
-python train.py --batch_size 4 \\
-				--lr 1e-4
+python train.py --batch_size 4 --lr 1e-4
 ``` 
 
 ### test 
-	according to yourserlf dataset path,modify data/config.py 
+according to yourserlf dataset path,modify data/config.py 
 1. test on AFW
 ```
-	python afw_test.py
+python afw_test.py
 ```
 
 2. test on fddb 
 ```
-   python fddb_test.py
+python fddb_test.py
 ```
 3. test on pascal face 
 ``` 
-	python pascal_test.py
+python pascal_test.py
 ```
 4. test on wider val 
 ```
-	python wider_test.py
+python wider_test.py
 ```
 
 ### demo 
 ```
-	python demo.py
+python demo.py
 ```
 
 ## result
