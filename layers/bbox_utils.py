@@ -28,8 +28,8 @@ def center_size(boxes):
     Return:
         boxes: (tensor) Converted xmin, ymin, xmax, ymax form of boxes.
     """
-    return torch.cat((boxes[:, 2:] + boxes[:, :2]) / 2,  # cx, cy
-                     boxes[:, 2:] - boxes[:, :2], 1)  # w, h
+    return torch.cat([(boxes[:, 2:] + boxes[:, :2]) / 2,  # cx, cy
+                     boxes[:, 2:] - boxes[:, :2]], 1)  # w, h
 
 
 def intersect(box_a, box_b):
@@ -115,9 +115,8 @@ def match(threshold, truths, priors, variances, labels, loc_t, conf_t, idx):
 
     N = (torch.sum(best_prior_overlap >= _th2) +
          torch.sum(best_prior_overlap >= _th3)) // 2
-
     matches = truths[best_truth_idx]          # Shape: [num_priors,4]
-    conf = labels[best_truth_idx] + 1         # Shape: [num_priors]
+    conf = labels[best_truth_idx]         # Shape: [num_priors]
     conf[best_truth_overlap < _th2] = 0  # label as background
 
     best_truth_overlap_clone = best_truth_overlap.clone()
@@ -176,7 +175,7 @@ def match_ssd(threshold, truths, priors, variances, labels, loc_t, conf_t, idx):
     for j in range(best_prior_idx.size(0)):
         best_truth_idx[best_prior_idx[j]] = j
     matches = truths[best_truth_idx]          # Shape: [num_priors,4]
-    conf = labels[best_truth_idx] + 1         # Shape: [num_priors]
+    conf = labels[best_truth_idx]         # Shape: [num_priors]
     conf[best_truth_overlap < threshold] = 0  # label as background
     loc = encode(matches, priors, variances)
     loc_t[idx] = loc    # [num_priors,4] encoded offsets to learn
@@ -197,14 +196,13 @@ def encode(matched, priors, variances):
     """
 
     # dist b/t match center and prior's center
-    eps = 1e-5
     g_cxcy = (matched[:, :2] + matched[:, 2:]) / 2 - priors[:, :2]
     # encode variance
     g_cxcy /= (variances[0] * priors[:, 2:])
     # match wh / prior wh
     g_wh = (matched[:, 2:] - matched[:, :2]) / priors[:, 2:]
     #g_wh = torch.log(g_wh) / variances[1]
-    g_wh = torch.log(g_wh+eps) / variances[1]
+    g_wh = torch.log(g_wh) / variances[1]
     # return target for smooth_l1_loss
     return torch.cat([g_cxcy, g_wh], 1)  # [num_priors,4]
 
