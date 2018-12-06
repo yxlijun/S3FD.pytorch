@@ -44,7 +44,13 @@ python demo.py
 ### Result
 <div align="center">
 <img src="https://github.com/yxlijun/S3FD.pytorch/blob/master/img/AFW.png" height="300px" alt="afw" >
-<img src="https://github.com/yxlijun/S3FD.pytorch/blob/master/img/pascal.png" height="300px" alt="pascal" >    
+<img src="https://github.com/yxlijun/S3FD.pytorch/blob/master/img/pascal.png" height="300px" alt="pascal" >
+<img src="https://github.com/yxlijun/S3FD.pytorch/blob/master/img/FDDB.png" height="300px" alt="fddb" >     
+</div>
+
+<div align="center">
+<img src="https://github.com/yxlijun/S3FD.pytorch/blob/master/tmp/test2.jpg" height="300px" alt="afw" >
+<img src="https://github.com/yxlijun/S3FD.pytorch/blob/master/tmp/test.jpg" height="300px" alt="pascal" >   
 </div>
 
 1. AFW AP=99.43 paper=99.85
