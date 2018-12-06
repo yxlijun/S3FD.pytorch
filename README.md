@@ -43,14 +43,18 @@ python demo.py
 
 ### Result
 <div align="center">
-<img src="https://github.com/yxlijun/S3FD.pytorch/blob/master/img/AFW.png" height="300px" alt="afw" >
-<img src="https://github.com/yxlijun/S3FD.pytorch/blob/master/img/pascal.png" height="300px" alt="pascal" >
-<img src="https://github.com/yxlijun/S3FD.pytorch/blob/master/img/FDDB.png" height="300px" alt="fddb" >     
+<img src="https://github.com/yxlijun/S3FD.pytorch/blob/master/img/AFW.png" height="200px" alt="afw" >
+<img src="https://github.com/yxlijun/S3FD.pytorch/blob/master/img/pascal.png" height="200px" alt="pascal" >
+<img src="https://github.com/yxlijun/S3FD.pytorch/blob/master/img/FDDB.png" height="200px" alt="fddb" >     
 </div>
+```
+AFW AP=99.43 paper=99.85
+PASCAL AP=98.77 paper=98.49
+FDDB AP=0.969 paper=0.983
+```
 
 <div align="center">
 <img src="https://github.com/yxlijun/S3FD.pytorch/blob/master/tmp/test2.jpg" height="300px" alt="afw" >
-<img src="https://github.com/yxlijun/S3FD.pytorch/blob/master/tmp/test.jpg" height="300px" alt="pascal" >   
 </div>
 
 1. AFW AP=99.43 paper=99.85
