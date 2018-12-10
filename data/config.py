@@ -46,6 +46,6 @@ cfg.GAMMA = 4
 
 
 # detection config
-cfg.NMS_THRESH = 0.3
+cfg.NMS_THRESH = 0.5
 cfg.TOP_K = 1000
 cfg.CONF_THRESH = 0.05

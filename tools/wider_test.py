@@ -27,7 +27,7 @@ from utils.augmentations import S3FDBasicTransform
 parser = argparse.ArgumentParser(description='s3df evaluatuon wider')
 parser.add_argument('--trained_model', type=str,
                     default='weights/s3fd.pth', help='trained model')
-parser.add_argument('--thresh', default=0.1, type=float,
+parser.add_argument('--thresh', default=0.05, type=float,
                     help='Final confidence threshold')
 args = parser.parse_args()
 
@@ -68,7 +68,7 @@ def detect_face(net, img, shrink):
     det_ymax = img.shape[0] * detections[0, 1, :, 4] / shrink
     det = np.column_stack((det_xmin, det_ymin, det_xmax, det_ymax, det_conf))
 
-    keep_index = np.where(det[:, 4] >= args.thresh)[0]
+    keep_index = np.where(det[:, 4] >=0)[0]
     det = det[keep_index, :]
 
     return det
@@ -222,13 +222,7 @@ if __name__ == '__main__':
 
             t2 = time.time()
             print('Detect %04d th image costs %.4f' % (counter, t2 - t1))
-
-            for bbox in dets:
-                x1, y1, x2, y2, score = bbox
-                x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-                if score >= 0.3:
-                    cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
-            cv2.imwrite('test.jpg', img)
+            
 
             fout = open(osp.join(save_path, event[0][
                         0].encode('utf-8'), im_name + '.txt'), 'w')

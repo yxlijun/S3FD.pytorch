@@ -13,7 +13,7 @@ from torch.autograd import Variable
 
 from layers import *
 from data.config import cfg
-
+import numpy as np
 
 class S3FD(nn.Module):
     """Single Shot Multibox Architecture
@@ -147,6 +147,7 @@ class S3FD(nn.Module):
         loc = torch.cat([o.view(o.size(0), -1) for o in loc], 1)
         conf = torch.cat([o.view(o.size(0), -1) for o in conf], 1)
 
+       
         if self.phase == 'test':
             output = self.detect(
                 loc.view(loc.size(0), -1, 4),                   # loc preds
@@ -154,6 +155,7 @@ class S3FD(nn.Module):
                                        self.num_classes)),                # conf preds
                 self.priors.type(type(x.data))                  # default boxes
             )
+
         else:
             output = (
                 loc.view(loc.size(0), -1, 4),
@@ -259,8 +261,9 @@ def build_s3fd(phase, num_classes=2):
 
     return S3FD(phase, base_, extras_, head_, num_classes)
 
+
 if __name__ == '__main__':
     net = build_s3fd('train', num_classes=2)
-    net.init([340, 300])
-    inputs = Variable(torch.randn(1, 3, 340, 300))
+    inputs = Variable(torch.randn(4, 3, 640, 640))
     output = net(inputs)
+

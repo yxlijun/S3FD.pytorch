@@ -51,7 +51,7 @@ python demo.py
 
 	AFW AP=99.43 paper=99.85 
 	PASCAL AP=98.77 paper=98.49
-	FDDB AP=0.969 paper=0.983
+	FDDB AP=0.975 paper=0.983
 
 2. demo
 <div align="center">

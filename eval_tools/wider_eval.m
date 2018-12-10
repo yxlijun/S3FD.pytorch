@@ -7,7 +7,7 @@ clear;
 close all;
 addpath(genpath('./plot'));
 %Please specify your prediction directory.
-pred_dir = './s3fd_val';
+pred_dir = './sfd_val';
 gt_dir = './ground_truth/wider_face_val.mat';
 %preprocessing
 pred_list = read_pred(pred_dir,gt_dir);
