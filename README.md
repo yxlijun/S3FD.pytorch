@@ -49,7 +49,7 @@ python demo.py
 <img src="https://github.com/yxlijun/S3FD.pytorch/blob/master/img/FDDB.png" height="200px" alt="fddb" >     
 </div>
 
-	AFW AP=99.43 paper=99.85 
+	AFW AP=99.81 paper=99.85 
 	PASCAL AP=98.77 paper=98.49
 	FDDB AP=0.975 paper=0.983
 
