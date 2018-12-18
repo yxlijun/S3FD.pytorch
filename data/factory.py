@@ -6,7 +6,7 @@ from __future__ import print_function
 
 
 from .egohand import HandDetection
-from .wider_face import WIDERDetection
+from .widerface import WIDERDetection
 from .vochead import VOCDetection, VOCAnnotationTransform
 from .config import cfg
 
@@ -26,12 +26,10 @@ def dataset_factory(dataset):
                                      target_transform=VOCAnnotationTransform(),
                                      mode='train',
                                      dataset_name='VOCPartAB')
-        val_dataset = VOCDetection(cfg.HEAD.DIR, image_sets=[('PartA', 'test'),
-                                                             ('PartB', 'test')],
+        val_dataset = VOCDetection(cfg.HEAD.DIR, image_sets=[('PartA', 'test'), ('PartB', 'test')],
                                    target_transform=VOCAnnotationTransform(),
                                    mode='test',
                                    dataset_name='VOCPartAB')
-    print(len(train_dataset))
     return train_dataset, val_dataset
 
 

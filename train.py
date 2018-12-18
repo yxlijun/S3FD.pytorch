@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser(
     description='S3FD face Detector Training With Pytorch')
 train_set = parser.add_mutually_exclusive_group()
 parser.add_argument('--dataset',
-                    default='face',
+                    default='hand',
                     choices=['hand', 'face', 'head'],
                     help='Train target')
 parser.add_argument('--basenet',
