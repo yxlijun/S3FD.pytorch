@@ -18,9 +18,10 @@ import torch.backends.cudnn as cudnn
 
 from data.config import cfg
 from s3fd import build_s3fd
-from utils.augmentations import S3FDAugmentation, S3FDValTransform
 from layers.modules import MultiBoxLoss
-from data.wider_face import WIDERDetection, detection_collate
+from data.factory import dataset_factory, detection_collate
+
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 
 def str2bool(v):
@@ -29,32 +30,44 @@ def str2bool(v):
 parser = argparse.ArgumentParser(
     description='S3FD face Detector Training With Pytorch')
 train_set = parser.add_mutually_exclusive_group()
-parser.add_argument('--basenet', default='vgg16_reducedfc.pth',
+parser.add_argument('--dataset',
+                    default='face',
+                    choices=['hand', 'face', 'head'],
+                    help='Train target')
+parser.add_argument('--basenet',
+                    default='vgg16_reducedfc.pth',
                     help='Pretrained base model')
-parser.add_argument('--batch_size', default=8, type=int,
+parser.add_argument('--batch_size',
+                    default=16, type=int,
                     help='Batch size for training')
-parser.add_argument('--resume', default=None, type=str,
+parser.add_argument('--resume',
+                    default=None, type=str,
                     help='Checkpoint state_dict file to resume training from')
-parser.add_argument('--start_iter', default=0, type=int,
-                    help='Resume training at this iter')
-parser.add_argument('--num_workers', default=4, type=int,
+parser.add_argument('--num_workers',
+                    default=8, type=int,
                     help='Number of workers used in dataloading')
-parser.add_argument('--cuda', default=True, type=str2bool,
+parser.add_argument('--cuda',
+                    default=True, type=str2bool,
                     help='Use CUDA to train model')
-parser.add_argument('--lr', '--learning-rate', default=1e-4, type=float,
+parser.add_argument('--lr', '--learning-rate',
+                    default=1e-3, type=float,
                     help='initial learning rate')
-parser.add_argument('--momentum', default=0.9, type=float,
+parser.add_argument('--momentum',
+                    default=0.9, type=float,
                     help='Momentum value for optim')
-parser.add_argument('--weight_decay', default=5e-4, type=float,
+parser.add_argument('--weight_decay',
+                    default=5e-4, type=float,
                     help='Weight decay for SGD')
-parser.add_argument('--gamma', default=0.1, type=float,
+parser.add_argument('--gamma',
+                    default=0.1, type=float,
                     help='Gamma update for SGD')
-parser.add_argument('--save_folder', default='weights/',
+parser.add_argument('--multigpu',
+                    default=False, type=str2bool,
+                    help='Use mutil Gpu training')
+parser.add_argument('--save_folder',
+                    default='weights/',
                     help='Directory for saving checkpoint models')
 args = parser.parse_args()
-
-os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
-torch.manual_seed(1)
 
 
 if torch.cuda.is_available():
@@ -71,9 +84,7 @@ if not os.path.exists(args.save_folder):
     os.makedirs(args.save_folder)
 
 
-train_dataset = WIDERDetection(cfg.TRAIN_FILE,
-                               transform=S3FDAugmentation(cfg.INPUT_SIZE,cfg.MEANS),
-                               train=True)
+train_dataset, val_dataset = dataset_factory(args.dataset)
 
 train_loader = data.DataLoader(train_dataset, args.batch_size,
                                num_workers=args.num_workers,
@@ -81,11 +92,8 @@ train_loader = data.DataLoader(train_dataset, args.batch_size,
                                collate_fn=detection_collate,
                                pin_memory=True)
 
-val_dataset = WIDERDetection(cfg.VAL_FILE,
-                             transform=S3FDValTransform(cfg.INPUT_SIZE,cfg.MEANS),
-                             train=False)
-
-val_loader = data.DataLoader(val_dataset, args.batch_size,
+val_batchsize = args.batch_size // 2
+val_loader = data.DataLoader(val_dataset, val_batchsize,
                              num_workers=args.num_workers,
                              shuffle=False,
                              collate_fn=detection_collate,
@@ -93,7 +101,8 @@ val_loader = data.DataLoader(val_dataset, args.batch_size,
 
 min_loss = np.inf
 start_epoch = 0
-net = build_s3fd('train', cfg.NUM_CLASSES)
+s3fd_net = build_s3fd('train', cfg.NUM_CLASSES)
+net = s3fd_net
 
 if args.resume:
     print('Resuming training, loading {}...'.format(args.resume))
@@ -105,6 +114,8 @@ else:
     net.vgg.load_state_dict(vgg_weights)
 
 if args.cuda:
+    if args.multigpu:
+        net = torch.nn.DataParallel(s3fd_net)
     net = net.cuda()
     cudnn.benckmark = True
 
@@ -116,7 +127,7 @@ if not args.resume:
 
 optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=args.momentum,
                       weight_decay=args.weight_decay)
-criterion = MultiBoxLoss(cfg, args.cuda)
+criterion = MultiBoxLoss(cfg, args.dataset, args.cuda)
 print('Loading wider dataset...')
 print('Using the specified args:')
 print(args)
@@ -155,16 +166,17 @@ def train():
             conf_loss += loss_c.data[0]
 
             if iteration % 10 == 0:
-                locloss = loc_loss / (batch_idx + 1)
-                confloss = conf_loss / (batch_idx + 1)
-                tloss = locloss + confloss
-                print('iter ' + repr(iteration) + ' || loc_Loss: %.4f || conf_Loss:%.4f || Loss:%.4f || timer: %.4f sec.' %
-                      (locloss, confloss, tloss, t1 - t0))
+                print('Timer: %.4f' % (t1 - t0))
+                print('epoch:' + repr(epoch) + ' || iter:' +
+                      repr(iteration) + ' || Loss:%.4f' % (loss.data[0]))
+                print('->> conf loss:{:.4f} || loc loss:{:.4f}'.format(
+                    loss_c.data[0], loss_l.data[0]))
 
             if iteration != 0 and iteration % 5000 == 0:
                 print('Saving state, iter:', iteration)
-                torch.save(net.state_dict(), os.path.join(args.save_folder, 's3fd_wider_' +
-                                                          repr(iteration) + '.pth'))
+                file = 'sfd_' + args.dataset + '_' + repr(iteration) + '.pth'
+                torch.save(s3fd_net.state_dict(),
+                           os.path.join(args.save_folder, file))
             iteration += 1
 
         val(epoch)
@@ -193,27 +205,26 @@ def val(epoch):
         step += 1
 
     tloss = (loc_loss + conf_loss) / step
-    locloss = loc_loss / step
-    confloss = conf_loss / step
-
     t2 = time.time()
-    print('test epoch ' + repr(epoch) + ' || loc_Loss:%.4f || conf_Loss:%.4f || Loss:%.4f || timer:%.4f sec.' %
-          (locloss, confloss, tloss, t2 - t1))
+    print('Timer: %.4f' % (t2 - t1))
+    print('test epoch:' + repr(epoch) + ' || Loss:%.4f' % (tloss))
 
     global min_loss
     if tloss < min_loss:
         print('Saving best state,epoch', epoch)
-        torch.save(net.state_dict(), os.path.join(
-            args.save_folder, 's3fd.pth'))
+        file = 'sfd_{}.pth'.format(args.dataset)
+        torch.save(s3fd_net.state_dict(), os.path.join(
+            args.save_folder, file))
         min_loss = tloss
 
     states = {
         'epoch': epoch,
-        'weight': net.state_dict(),
+        'weight': s3fd_net.state_dict(),
     }
+    file = 'sfd_{}_checkpoint.pth'.format(args.dataset)
     torch.save(states, os.path.join(
-        args.save_folder, 's3fd_checkpoint.pth'))
-
+        args.save_folder, file))
+    
 
 def adjust_learning_rate(optimizer, gamma, step):
     """Sets the learning rate to the initial LR decayed by 10 at every

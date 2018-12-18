@@ -37,14 +37,22 @@ class MultiBoxLoss(nn.Module):
         See: https://arxiv.org/pdf/1512.02325.pdf for more details.
     """
 
-    def __init__(self, cfg, use_gpu=True):
+    def __init__(self, cfg, dataset, use_gpu=True):
         super(MultiBoxLoss, self).__init__()
         self.use_gpu = use_gpu
         self.num_classes = cfg.NUM_CLASSES
-        self.threshold = cfg.OVERLAP_THRESH
-        self.gamma = cfg.GAMMA
         self.negpos_ratio = cfg.NEG_POS_RATIOS
         self.variance = cfg.VARIANCE
+        self.dataset = dataset
+        if dataset == 'face':
+            self.threshold = cfg.FACE.OVERLAP_THRESH
+            self.match = match
+        elif dataset == 'hand':
+            self.threshold = cfg.HAND.OVERLAP_THRESH
+            self.match = match_ssd
+        else:
+            self.threshold = cfg.HEAD.OVERLAP_THRESH
+            self.match = match
 
     def forward(self, predictions, targets):
         """Multibox Loss
@@ -71,8 +79,8 @@ class MultiBoxLoss(nn.Module):
             truths = targets[idx][:, :-1].data
             labels = targets[idx][:, -1].data
             defaults = priors.data
-            match(self.threshold, truths, defaults, self.variance, labels,
-                  loc_t, conf_t, idx)
+            self.match(self.threshold, truths, defaults, self.variance, labels,
+                       loc_t, conf_t, idx)
         if self.use_gpu:
             loc_t = loc_t.cuda()
             conf_t = conf_t.cuda()
@@ -100,12 +108,8 @@ class MultiBoxLoss(nn.Module):
         _, loss_idx = loss_c.sort(1, descending=True)
         _, idx_rank = loss_idx.sort(1)
         num_pos = pos.long().sum(1, keepdim=True)
-
-        if num_pos.data.sum() > 0:
-            num_neg = torch.clamp(self.negpos_ratio *
-                                  num_pos, max=pos.size(1) - 1)
-        else:
-            num_neg = torch.clamp(self.negpos_ratio * 30, max=pos.size(1) - 1)
+        num_neg = torch.clamp(self.negpos_ratio *
+                              num_pos, max=pos.size(1) - 1)
         neg = idx_rank < num_neg.expand_as(idx_rank)
 
         # Confidence Loss Including Positive and Negative Examples
@@ -117,9 +121,7 @@ class MultiBoxLoss(nn.Module):
         loss_c = F.cross_entropy(conf_p, targets_weighted, size_average=False)
 
         # Sum of losses: L(x,c,l,g) = (Lconf(x, c) + αLloc(x,l,g)) / N
-        Nloc = num_pos.data.sum()
-        Ncls = conf_p.size(0)
-        loss_l /= Nloc
-        loss_c /= Ncls
-        loss_c *= self.gamma
+        N = num_pos.data.sum() if num_pos.data.sum() > 0 else num
+        loss_l /= N
+        loss_c /= N
         return loss_l, loss_c

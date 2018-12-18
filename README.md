@@ -14,7 +14,7 @@ A PyTorch Implementation of Single Shot Scale-invariant Face Detector.
 
 ### Train 
 ``` 
-python train.py --batch_size 4 --lr 1e-4
+python train.py --batch_size 4 --lr 1e-3
 ``` 
 
 ### Evalution

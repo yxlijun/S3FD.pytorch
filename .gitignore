@@ -5,3 +5,6 @@ eval_tools/s3fd_val/
 eval_tools/sfd_val/
 data/train.txt
 data/val.txt
+data/*.txt
+img/02*.jpg
+img/tj*.jpg

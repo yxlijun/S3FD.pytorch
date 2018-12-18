@@ -1,31 +1,32 @@
 #-*- coding:utf-8 -*-
 
 from __future__ import division
-from __future__ import print_function
 from __future__ import absolute_import
-
+from __future__ import print_function
 
 import os
-import os.path as osp
 import torch
 import argparse
 import torch.nn as nn
 import torch.utils.data as data
 import torch.backends.cudnn as cudnn
 import torchvision.transforms as transforms
+import os.path as osp
 
 import cv2
 import time
 import numpy as np
+from PIL import Image
 import scipy.io as sio
 
 from data.config import cfg
 from s3fd import build_s3fd
 from torch.autograd import Variable
-from utils.augmentations import S3FDBasicTransform
+from utils.augmentations import to_chw_bgr
 
-parser = argparse.ArgumentParser(description='s3df evaluatuon wider')
-parser.add_argument('--trained_model', type=str,
+
+parser = argparse.ArgumentParser(description='s3fd evaluatuon wider')
+parser.add_argument('--model', type=str,
                     default='weights/s3fd.pth', help='trained model')
 parser.add_argument('--thresh', default=0.05, type=float,
                     help='Final confidence threshold')
@@ -44,19 +45,17 @@ def detect_face(net, img, shrink):
     if shrink != 1:
         img = cv2.resize(img, None, None, fx=shrink, fy=shrink,
                          interpolation=cv2.INTER_LINEAR)
-    '''
-    image = img.copy()
-    h, w, _ = img.shape
 
-    if h * w >= (1800 * 1200):
-        image = cv2.resize(img, (1800, 1200))
-    '''
-    x = transform(img)[0]
-    x = x[:, :, (2, 1, 0)]
-    x = Variable(torch.from_numpy(x).permute(2, 0, 1).unsqueeze(0))
+    x = to_chw_bgr(image)
+    x = x.astype('float32')
+    x -= cfg.img_mean
+    x = x[[2, 1, 0], :, :]
+
+    x = Variable(torch.from_numpy(x).unsqueeze(0))
+
     if use_cuda:
         x = x.cuda()
-    #print(x.size())
+    # print(x.size())
     y = net(x)
     detections = y.data
     detections = detections.cpu().numpy()
@@ -68,7 +67,7 @@ def detect_face(net, img, shrink):
     det_ymax = img.shape[0] * detections[0, 1, :, 4] / shrink
     det = np.column_stack((det_xmin, det_ymin, det_xmax, det_ymax, det_conf))
 
-    keep_index = np.where(det[:, 4] >=0)[0]
+    keep_index = np.where(det[:, 4] >= args.thresh)[0]
     det = det[keep_index, :]
 
     return det
@@ -162,10 +161,10 @@ def get_data():
     subset = 'val'
     if subset is 'val':
         wider_face = sio.loadmat(
-            './eval_tools/ground_truth/wider_face_val.mat')
+            './eval_tools/wider_face_val.mat')
     else:
         wider_face = sio.loadmat(
-            './eval_tools/ground_truth/wider_face_test.mat')
+            './eval_tools/wider_face_test.mat')
     event_list = wider_face['event_list']
     file_list = wider_face['file_list']
     del wider_face
@@ -178,16 +177,16 @@ def get_data():
 
 if __name__ == '__main__':
     event_list, file_list, imgs_path, save_path = get_data()
-
+    cfg.USE_NMS = False
     net = build_s3fd('test', cfg.NUM_CLASSES)
-    net.load_state_dict(torch.load(args.trained_model))
+    net.load_state_dict(torch.load(args.model))
     net.eval()
 
     if use_cuda:
         net.cuda()
         cudnn.benckmark = True
 
-    transform = S3FDBasicTransform(cfg.INPUT_SIZE, cfg.MEANS)
+    #transform = S3FDBasicTransform(cfg.INPUT_SIZE, cfg.MEANS)
 
     counter = 0
 
@@ -200,13 +199,17 @@ if __name__ == '__main__':
         for num, file in enumerate(filelist):
             im_name = file[0][0].encode('utf-8')
             in_file = os.path.join(imgs_path, event[0][0], im_name[:] + '.jpg')
-            img = cv2.imread(in_file)
+            #img = cv2.imread(in_file)
+            img = Image.open(in_file)
+            if img.mode == 'L':
+                img = img.convert('RGB')
+            img = np.array(img)
 
             # max_im_shrink = (0x7fffffff / 577.0 /
             #                 (img.shape[0] * img.shape[1])) ** 0.5
 
             max_im_shrink = np.sqrt(
-                1750 * 1200 / (img.shape[0] * img.shape[1]))
+                1650 * 1200 / (img.shape[0] * img.shape[1]))
 
             shrink = max_im_shrink if max_im_shrink < 1 else 1
             counter += 1
@@ -222,7 +225,6 @@ if __name__ == '__main__':
 
             t2 = time.time()
             print('Detect %04d th image costs %.4f' % (counter, t2 - t1))
-            
 
             fout = open(osp.join(save_path, event[0][
                         0].encode('utf-8'), im_name + '.txt'), 'w')

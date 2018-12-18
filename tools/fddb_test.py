@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import os
+import sys
 import torch
 import argparse
 import torch.nn as nn
@@ -15,14 +16,15 @@ import torchvision.transforms as transforms
 import cv2
 import time
 import numpy as np
+from PIL import Image
 
 from data.config import cfg
 from s3fd import build_s3fd
 from torch.autograd import Variable
-from utils.augmentations import S3FDBasicTransform
+from utils.augmentations import to_chw_bgr
 
-parser = argparse.ArgumentParser(description='s3df evaluatuon fddb')
-parser.add_argument('--trained_model', type=str,
+parser = argparse.ArgumentParser(description='s3fd evaluatuon fddb')
+parser.add_argument('--model', type=str,
                     default='weights/s3fd.pth', help='trained model')
 parser.add_argument('--thresh', default=0.1, type=float,
                     help='Final confidence threshold')
@@ -46,11 +48,14 @@ if not os.path.exists(FDDB_RESULT_IMG_DIR):
     os.makedirs(FDDB_RESULT_IMG_DIR)
 
 
-def detect_face(net, img, transform, thresh):
+def detect_face(net, img, thresh):
     height, width, _ = img.shape
-    x = transform(img)[0]
-    x = x[:, :, (2, 1, 0)]
-    x = Variable(torch.from_numpy(x).permute(2, 0, 1).unsqueeze(0))
+    x = to_chw_bgr(image)
+    x = x.astype('float32')
+    x -= cfg.img_mean
+    x = x[[2, 1, 0], :, :]
+
+    x = Variable(torch.from_numpy(x).unsqueeze(0))
     if use_cuda:
         x = x.cuda()
 
@@ -75,14 +80,14 @@ def detect_face(net, img, transform, thresh):
 
 if __name__ == '__main__':
     net = build_s3fd('test', cfg.NUM_CLASSES)
-    net.load_state_dict(torch.load(args.trained_model))
+    net.load_state_dict(torch.load(args.model))
     net.eval()
 
     if use_cuda:
         net.cuda()
         cudnn.benckmark = True
 
-    transform = S3FDBasicTransform(cfg.INPUT_SIZE, cfg.MEANS)
+    #transform = S3FDBasicTransform(cfg.INPUT_SIZE, cfg.MEANS)
 
     counter = 0
 
@@ -102,8 +107,12 @@ if __name__ == '__main__':
                 FDDB_RESULT_IMG_DIR, line.replace('/', '_') + '.jpg')
             counter += 1
             t1 = time.time()
-            img = cv2.imread(img_file, cv2.IMREAD_COLOR)
-            bboxes = detect_face(net, img, transform, args.thresh)
+            #img = cv2.imread(img_file, cv2.IMREAD_COLOR)
+            img = Image.open(img_file)
+            if img.mode == 'L':
+                img = img.convert('RGB')
+            img = np.array(img)
+            bboxes = detect_face(net, img, args.thresh)
             t2 = time.time()
             print('Detect %04d th image costs %.4f' % (counter, t2 - t1))
             fout.write('%s\n' % line)

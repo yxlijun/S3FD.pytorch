@@ -12,11 +12,11 @@ import random
 from utils.augmentations import preprocess
 
 
-class WIDERDetection(data.Dataset):
+class HandDetection(data.Dataset):
     """docstring for WIDERDetection"""
 
     def __init__(self, list_file, mode='train'):
-        super(WIDERDetection, self).__init__()
+        super(HandDetection, self).__init__()
         self.mode = mode
         self.fnames = []
         self.boxes = []
@@ -31,19 +31,15 @@ class WIDERDetection(data.Dataset):
             box = []
             label = []
             for i in xrange(num_faces):
-                x = float(line[2 + 5 * i])
-                y = float(line[3 + 5 * i])
-                w = float(line[4 + 5 * i])
-                h = float(line[5 + 5 * i])
-                c = int(line[6 + 5 * i])
-                if w <= 0 or h <= 0:
-                    continue
-                box.append([x, y, x + w, y + h])
-                label.append(c)
-            if len(box) > 0:
-                self.fnames.append(line[0])
-                self.boxes.append(box)
-                self.labels.append(label)
+                xmin = float(line[2 + 4 * i])
+                ymin = float(line[3 + 4 * i])
+                xmax = float(line[4 + 4 * i])
+                ymax = float(line[5 + 4 * i])
+                box.append([xmin, ymin, xmax, ymax])
+                label.append(1)
+            self.fnames.append(line[0])
+            self.boxes.append(box)
+            self.labels.append(label)
 
         self.num_samples = len(self.boxes)
 
@@ -79,16 +75,15 @@ class WIDERDetection(data.Dataset):
             else:
                 index = random.randrange(0, self.num_samples)
 
-        
-        #img = Image.fromarray(img)
         '''
+        #img = Image.fromarray(img)        
         draw = ImageDraw.Draw(img)
         w,h = img.size
-        for bbox in sample_labels:
-            bbox = (bbox[1:] * np.array([w, h, w, h])).tolist()
+        for bbox in target:
+            bbox = (bbox[:-1] * np.array([w, h, w, h])).tolist()
 
             draw.rectangle(bbox,outline='red')
-        img.save('image.jpg')
+        img.show()
         '''
         return torch.from_numpy(img), target, im_height, im_width
         
@@ -101,29 +96,17 @@ class WIDERDetection(data.Dataset):
         return boxes
 
 
-def detection_collate(batch):
-    """Custom collate fn for dealing with batches of images that have a different
-    number of associated object annotations (bounding boxes).
-
-    Arguments:
-        batch: (tuple) A tuple of tensor images and lists of annotations
-
-    Return:
-        A tuple containing:
-            1) (tensor) batch of images stacked on their 0 dim
-            2) (list of tensors) annotations for a given image are stacked on
-                                 0 dim
-    """
-    targets = []
-    imgs = []
-    for sample in batch:
-        imgs.append(sample[0])
-        targets.append(torch.FloatTensor(sample[1]))
-    return torch.stack(imgs, 0), targets
+    def pull_image(self,index):
+        img_path = self.fnames[index]
+        img = Image.open(img_path)
+        if img.mode=='L':
+            img.convert('RGB')
+        img = np.array(img)
+        return img
 
 
 if __name__ == '__main__':
-    from config import cfg
-    dataset = WIDERDetection(cfg.FACE.TRAIN_FILE)
+    from data.config import cfg
+    dataset = HandDetection(cfg.TRAIN_FILE)
     #for i in range(len(dataset)):
-    dataset.pull_item(14)
+    dataset.pull_item(2)

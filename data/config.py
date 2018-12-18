@@ -4,48 +4,79 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 
-
+import os
 from easydict import EasyDict
-
-cfg = EasyDict()
-
-# dataset config
-cfg.HOME = '/home/data/lj/'
-cfg.TRAIN_FILE = './data/train.txt'
-cfg.VAL_FILE = './data/val.txt'
-
-# evalution config
-cfg.FDDB_DIR = '/home/data/lj/FDDB'
-cfg.WIDER_DIR = '/home/data/lj/WIDER'
-cfg.AFW_DIR = '/home/data/lj/AFW'
-cfg.PASCAL_DIR = '/home/data/lj/PASCAL_FACE'
+import numpy as np
 
 
-cfg.MEANS = (104, 117, 123)
+_C = EasyDict()
+cfg = _C
+# data augument config
+_C.expand_prob = 0.5
+_C.expand_max_ratio = 4
+_C.hue_prob = 0.5
+_C.hue_delta = 18
+_C.contrast_prob = 0.5
+_C.contrast_delta = 0.5
+_C.saturation_prob = 0.5
+_C.saturation_delta = 0.5
+_C.brightness_prob = 0.5
+_C.brightness_delta = 0.125
+_C.data_anchor_sampling_prob = 0.5
+_C.min_face_size = 6.0
+_C.apply_distort = True
+_C.apply_expand = False
+_C.img_mean = np.array([104., 117., 123.])[:, np.newaxis, np.newaxis].astype(
+    'float32')
+_C.resize_width = 640
+_C.resize_height = 640
+_C.scale = 1 / 127.0
+_C.anchor_sampling = True
+_C.filter_min_face = True
+
 # train config
-cfg.LR_STEPS = (198, 250)
-cfg.EPOCHES = 300
-
+_C.LR_STEPS = (120, 198, 250)
+_C.EPOCHES = 300
 
 # anchor config
-cfg.FEATURE_MAPS = [160, 80, 40, 20, 10, 5]
-cfg.INPUT_SIZE = 640
-cfg.STEPS = [4, 8, 16, 32, 64, 128]
-cfg.ANCHOR_SIZES = [16, 32, 64, 128, 256, 512]
-cfg.CLIP = True
-cfg.VARIANCE = [0.1, 0.2]
-
-##
-cfg.FILTER_THRESH = 6 / cfg.INPUT_SIZE
-
-# loss config
-cfg.NUM_CLASSES = 2
-cfg.OVERLAP_THRESH = [0.1, 0.35, 0.5]
-cfg.NEG_POS_RATIOS = 3
-cfg.GAMMA = 4
-
+_C.FEATURE_MAPS = [160, 80, 40, 20, 10, 5]
+_C.INPUT_SIZE = 640
+_C.STEPS = [4, 8, 16, 32, 64, 128]
+_C.ANCHOR_SIZES = [16, 32, 64, 128, 256, 512]
+_C.CLIP = False
+_C.VARIANCE = [0.1, 0.2]
 
 # detection config
-cfg.NMS_THRESH = 0.5
-cfg.TOP_K = 1000
-cfg.CONF_THRESH = 0.05
+_C.NMS_THRESH = 0.3
+_C.TOP_K = 500
+_C.CONF_THRESH = 0.01
+
+# loss config
+_C.NEG_POS_RATIOS = 3
+_C.NUM_CLASSES = 2
+_C.USE_NMS = True
+
+# dataset config
+_C.HOME = '/home/data/lj/'
+
+# hand config
+_C.HAND = EasyDict()
+_C.HAND.TRAIN_FILE = './data/hand_train.txt'
+_C.HAND.VAL_FILE = './data/hand_val.txt'
+_C.HAND.DIR = '/home/data/lj/egohands/'
+_C.HAND.OVERLAP_THRESH = 0.35
+
+# face config
+_C.FACE = EasyDict()
+_C.FACE.TRAIN_FILE = './data/face_train.txt'
+_C.FACE.VAL_FILE = './data/face_val.txt'
+_C.FACE.FDDB_DIR = '/home/data/lj/FDDB'
+_C.FACE.WIDER_DIR = '/home/data/lj/WIDER'
+_C.FACE.AFW_DIR = '/home/data/lj/AFW'
+_C.FACE.PASCAL_DIR = '/home/data/lj/PASCAL_FACE'
+_C.FACE.OVERLAP_THRESH = [0.1, 0.35, 0.5]
+
+# head config
+_C.HEAD = EasyDict()
+_C.HEAD.DIR = '/home/data/lj/VOCHead/'
+_C.HEAD.OVERLAP_THRESH = [0.1, 0.35, 0.5]

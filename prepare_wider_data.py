@@ -6,8 +6,8 @@ from __future__ import print_function
 
 
 import os
-from data.config import cfg 
-
+from data.config import cfg
+import cv2
 
 WIDER_ROOT = os.path.join(cfg.HOME, 'WIDER')
 train_list_file = os.path.join(WIDER_ROOT, 'wider_face_split',
@@ -19,7 +19,7 @@ WIDER_TRAIN = os.path.join(WIDER_ROOT, 'WIDER_train', 'images')
 WIDER_VAL = os.path.join(WIDER_ROOT, 'WIDER_val', 'images')
 
 
-def parse_wider_file(root,file):
+def parse_wider_file(root, file):
     with open(file, 'r') as fr:
         lines = fr.readlines()
     face_count = []
@@ -54,8 +54,8 @@ def parse_wider_file(root,file):
 
 
 def wider_data_file():
-    img_paths, bbox = parse_wider_file(WIDER_TRAIN,train_list_file)
-    fw = open(cfg.TRAIN_FILE, 'w')
+    img_paths, bbox = parse_wider_file(WIDER_TRAIN, train_list_file)
+    fw = open(cfg.FACE.TRAIN_FILE, 'w')
     for index in xrange(len(img_paths)):
         path = img_paths[index]
         boxes = bbox[index]
@@ -67,8 +67,8 @@ def wider_data_file():
         fw.write('\n')
     fw.close()
 
-    img_paths, bbox = parse_wider_file(WIDER_VAL,val_list_file)
-    fw = open(cfg.VAL_FILE, 'w')
+    img_paths, bbox = parse_wider_file(WIDER_VAL, val_list_file)
+    fw = open(cfg.FACE.VAL_FILE, 'w')
     for index in xrange(len(img_paths)):
         path = img_paths[index]
         boxes = bbox[index]

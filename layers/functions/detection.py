@@ -4,9 +4,9 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 
-import torch 
+import torch
 
-from ..bbox_utils import decode,nms 
+from ..bbox_utils import decode, nms
 from torch.autograd import Function
 
 
@@ -16,12 +16,14 @@ class Detect(Function):
     scores and threshold to a top_k number of output predictions for both
     confidence score and locations.
     """
+
     def __init__(self, cfg):
         self.num_classes = cfg.NUM_CLASSES
         self.top_k = cfg.TOP_K
         self.nms_thresh = cfg.NMS_THRESH
         self.conf_thresh = cfg.CONF_THRESH
         self.variance = cfg.VARIANCE
+        self.use_nms = cfg.USE_NMS
 
     def forward(self, loc_data, conf_data, prior_data):
         """
@@ -35,7 +37,7 @@ class Detect(Function):
         """
         num = loc_data.size(0)
         num_priors = prior_data.size(0)
-        output = torch.zeros(num, self.num_classes, self.top_k, 5)
+
         conf_preds = conf_data.view(
             num, num_priors, self.num_classes).transpose(2, 1)
         batch_priors = prior_data.view(-1, num_priors,
@@ -45,6 +47,8 @@ class Detect(Function):
         decoded_boxes = decode(loc_data.view(-1, 4),
                                batch_priors, self.variance)
         decoded_boxes = decoded_boxes.view(num, num_priors, 4)
+
+        output = torch.zeros(num, self.num_classes, self.top_k, 5)
 
         for i in range(num):
             boxes = decoded_boxes[i].clone()
@@ -58,7 +62,16 @@ class Detect(Function):
                     continue
                 l_mask = c_mask.unsqueeze(1).expand_as(boxes)
                 boxes_ = boxes[l_mask].view(-1, 4)
-                ids, count = nms(boxes_, scores, self.nms_thresh, self.top_k)
-                output[i, cl, :count] = torch.cat((scores[ids[:count]].unsqueeze(1),
-                                                   boxes_[ids[:count]]), 1)
+                if self.use_nms:
+                    ids, count = nms(
+                        boxes_, scores, self.nms_thresh, self.top_k)
+                    output[i, cl, :count] = torch.cat((scores[ids[:count]].unsqueeze(1),
+                                                       boxes_[ids[:count]]), 1)
+                else:
+                    sort_scores, idx = scores.sort(0,descending=True)
+                    count = sort_scores.size(
+                        0) if sort_scores.size(0) < self.top_k else self.top_k
+                    output[i, cl,:count] = torch.cat(
+                        (sort_scores[:count].unsqueeze(1), boxes_[idx[:count]]), 1)
+
         return output
