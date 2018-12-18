@@ -1,5 +1,8 @@
 ## S³FD: Single Shot Scale-invariant Face Detector ##
-A PyTorch Implementation of Single Shot Scale-invariant Face Detector.
+A PyTorch Implementation of Single Shot Scale-invariant Face Detector
+
+### Description
+Meanwhile train hand and head with S3FD,hand dataset is [Egohands Dataset](http://vision.soic.indiana.edu/projects/egohands/),head dataset is [SCUT-HEAD](https://github.com/HCIILAB/SCUT-HEAD-Dataset-Release),we can download [hand model](https://pan.baidu.com/s/1_d4HqioBJknGj2ypwtYaXg) and [head model](https://pan.baidu.com/s/1KCU19IYUMC4EZZboDxXOyw)
 
 ### Requirement
 * pytorch 0.3 
@@ -7,14 +10,17 @@ A PyTorch Implementation of Single Shot Scale-invariant Face Detector.
 * numpy 
 * easydict
 
-### Prepare WIDER data 
-1. download wider face dataset 
-2. modify data/config.py wider face path
+### Prepare data 
+1. download WIDER face dataset、Egohands dataset and SCUT-HEAD
+2. modify data/config.py 
 3. ``` python prepare_wider_data.py ```
+4 ``` python prepare_handataset.py ```
 
-### Train 
+
+### Train
+We can choose different dataset to train different target[face,head,hand] 
 ``` 
-python train.py --batch_size 4 --lr 1e-3
+python train.py --batch_size 4 --dataset face\hand\head
 ``` 
 
 ### Evalution
