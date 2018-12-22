@@ -23,7 +23,7 @@ class Detect(Function):
         self.nms_thresh = cfg.NMS_THRESH
         self.conf_thresh = cfg.CONF_THRESH
         self.variance = cfg.VARIANCE
-        self.use_nms = cfg.USE_NMS
+        self.nms_top_k = cfg.NMS_TOP_K
 
     def forward(self, loc_data, conf_data, prior_data):
         """
@@ -57,21 +57,16 @@ class Detect(Function):
             for cl in range(1, self.num_classes):
                 c_mask = conf_scores[cl].gt(self.conf_thresh)
                 scores = conf_scores[cl][c_mask]
-
+                
                 if scores.dim() == 0:
                     continue
                 l_mask = c_mask.unsqueeze(1).expand_as(boxes)
                 boxes_ = boxes[l_mask].view(-1, 4)
-                if self.use_nms:
-                    ids, count = nms(
-                        boxes_, scores, self.nms_thresh, self.top_k)
-                    output[i, cl, :count] = torch.cat((scores[ids[:count]].unsqueeze(1),
-                                                       boxes_[ids[:count]]), 1)
-                else:
-                    sort_scores, idx = scores.sort(0,descending=True)
-                    count = sort_scores.size(
-                        0) if sort_scores.size(0) < self.top_k else self.top_k
-                    output[i, cl,:count] = torch.cat(
-                        (sort_scores[:count].unsqueeze(1), boxes_[idx[:count]]), 1)
+                ids, count = nms(
+                    boxes_, scores, self.nms_thresh, self.nms_top_k)
+                count = count if count < self.top_k else self.top_k
+
+                output[i, cl, :count] = torch.cat((scores[ids[:count]].unsqueeze(1),
+                                                   boxes_[ids[:count]]), 1)
 
         return output

@@ -568,7 +568,7 @@ def anchor_crop_image_sampling(img,
     infDistance = 9999999
     bbox_labels = np.array(bbox_labels)
     scale = np.array([img_width, img_height, img_width, img_height])
-    
+
     boxes = bbox_labels[:, 1:5] * scale
     labels = bbox_labels[:, 0]
 
@@ -828,10 +828,10 @@ def preprocess(img, bbox_labels, mode, image_path):
 
             img = Image.fromarray(img)
 
-        interp_mode = [
-            Image.BILINEAR, Image.HAMMING, Image.NEAREST, Image.BICUBIC,
-            Image.LANCZOS
-        ]
+    interp_mode = [
+        Image.BILINEAR, Image.HAMMING, Image.NEAREST, Image.BICUBIC,
+        Image.LANCZOS
+    ]
     interp_indx = np.random.randint(0, 5)
 
     img = img.resize((cfg.resize_width, cfg.resize_height),

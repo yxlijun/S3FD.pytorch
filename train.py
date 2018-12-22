@@ -21,7 +21,7 @@ from s3fd import build_s3fd
 from layers.modules import MultiBoxLoss
 from data.factory import dataset_factory, detection_collate
 
-os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+#os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 
 def str2bool(v):
@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser(
     description='S3FD face Detector Training With Pytorch')
 train_set = parser.add_mutually_exclusive_group()
 parser.add_argument('--dataset',
-                    default='hand',
+                    default='face',
                     choices=['hand', 'face', 'head'],
                     help='Train target')
 parser.add_argument('--basenet',
@@ -44,7 +44,7 @@ parser.add_argument('--resume',
                     default=None, type=str,
                     help='Checkpoint state_dict file to resume training from')
 parser.add_argument('--num_workers',
-                    default=8, type=int,
+                    default=4, type=int,
                     help='Number of workers used in dataloading')
 parser.add_argument('--cuda',
                     default=True, type=str2bool,
@@ -104,6 +104,7 @@ start_epoch = 0
 s3fd_net = build_s3fd('train', cfg.NUM_CLASSES)
 net = s3fd_net
 
+
 if args.resume:
     print('Resuming training, loading {}...'.format(args.resume))
     start_epoch = net.load_weights(args.resume)
@@ -121,9 +122,9 @@ if args.cuda:
 
 if not args.resume:
     print('Initializing weights...')
-    net.extras.apply(net.weights_init)
-    net.loc.apply(net.weights_init)
-    net.conf.apply(net.weights_init)
+    s3fd_net.extras.apply(s3fd_net.weights_init)
+    s3fd_net.loc.apply(s3fd_net.weights_init)
+    s3fd_net.conf.apply(s3fd_net.weights_init)
 
 optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=args.momentum,
                       weight_decay=args.weight_decay)
@@ -138,8 +139,7 @@ def train():
     iteration = 0
     net.train()
     for epoch in range(start_epoch, cfg.EPOCHES):
-        loc_loss = 0
-        conf_loss = 0
+        losses = 0
         for batch_idx, (images, targets) in enumerate(train_loader):
             if args.cuda:
                 images = Variable(images.cuda())
@@ -149,7 +149,7 @@ def train():
                 images = Variable(images)
                 targets = [Variable(ann, volatile=True) for ann in targets]
 
-            if epoch in cfg.LR_STEPS:
+            if iteration in cfg.LR_STEPS:
                 step_index += 1
                 adjust_learning_rate(optimizer, args.gamma, step_index)
 
@@ -162,15 +162,16 @@ def train():
             loss.backward()
             optimizer.step()
             t1 = time.time()
-            loc_loss += loss_l.data[0]
-            conf_loss += loss_c.data[0]
+            losses += loss.data[0]
 
             if iteration % 10 == 0:
+                tloss = losses / (batch_idx + 1)
                 print('Timer: %.4f' % (t1 - t0))
                 print('epoch:' + repr(epoch) + ' || iter:' +
-                      repr(iteration) + ' || Loss:%.4f' % (loss.data[0]))
+                      repr(iteration) + ' || Loss:%.4f' % (tloss))
                 print('->> conf loss:{:.4f} || loc loss:{:.4f}'.format(
                     loss_c.data[0], loss_l.data[0]))
+                print('->>lr:{:.6f}'.format(optimizer.param_groups[0]['lr']))
 
             if iteration != 0 and iteration % 5000 == 0:
                 print('Saving state, iter:', iteration)
@@ -180,6 +181,8 @@ def train():
             iteration += 1
 
         val(epoch)
+        if iteration == cfg.MAX_STEPS:
+            break
 
 
 def val(epoch):
@@ -224,7 +227,7 @@ def val(epoch):
     file = 'sfd_{}_checkpoint.pth'.format(args.dataset)
     torch.save(states, os.path.join(
         args.save_folder, file))
-    
+
 
 def adjust_learning_rate(optimizer, gamma, step):
     """Sets the learning rate to the initial LR decayed by 10 at every

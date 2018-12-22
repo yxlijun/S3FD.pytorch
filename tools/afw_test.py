@@ -38,8 +38,8 @@ if use_cuda:
 else:
     torch.set_default_tensor_type('torch.FloatTensor')
 
-AFW_IMG_DIR = os.path.join(cfg.AFW_DIR, 'images')
-AFW_RESULT_DIR = os.path.join(cfg.AFW_DIR, 's3fd')
+AFW_IMG_DIR = os.path.join(cfg.FACE.AFW_DIR, 'images')
+AFW_RESULT_DIR = os.path.join(cfg.FACE.AFW_DIR, 's3fd')
 AFW_RESULT_IMG_DIR = os.path.join(AFW_RESULT_DIR, 'images')
 
 if not os.path.exists(AFW_RESULT_IMG_DIR):

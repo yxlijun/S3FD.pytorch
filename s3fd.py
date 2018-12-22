@@ -187,7 +187,7 @@ class S3FD(nn.Module):
             m.bias.data.zero_()
 
 
-vgg_cfg = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M',
+vgg_cfg = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'C', 512, 512, 512, 'M',
            512, 512, 512, 'M']
 
 extras_cfg = [256, 'S', 512, 128, 'S', 256]
@@ -208,7 +208,7 @@ def vgg(cfg, i, batch_norm=False):
             else:
                 layers += [conv2d, nn.ReLU(inplace=True)]
             in_channels = v
-    conv6 = nn.Conv2d(512, 1024, kernel_size=3, padding=6, dilation=6)
+    conv6 = nn.Conv2d(512, 1024, kernel_size=3, padding=3, dilation=3)
     conv7 = nn.Conv2d(1024, 1024, kernel_size=1)
     layers += [conv6,
                nn.ReLU(inplace=True), conv7, nn.ReLU(inplace=True)]
@@ -240,7 +240,7 @@ def multibox(vgg, extra_layers, num_classes):
     loc_layers += [nn.Conv2d(vgg[14].out_channels, 4,
                              kernel_size=3, padding=1)]
     conf_layers += [nn.Conv2d(vgg[14].out_channels,
-                              (num_classes - 1) * 3 + 1, kernel_size=3, padding=1)]
+                              3 + (num_classes-1), kernel_size=3, padding=1)]
 
     for k, v in enumerate(vgg_source):
         loc_layers += [nn.Conv2d(vgg[v].out_channels,
@@ -258,7 +258,7 @@ def multibox(vgg, extra_layers, num_classes):
 def build_s3fd(phase, num_classes=2):
     base_, extras_, head_ = multibox(
         vgg(vgg_cfg, 3), add_extras((extras_cfg), 1024), num_classes)
-
+    
     return S3FD(phase, base_, extras_, head_, num_classes)
 
 

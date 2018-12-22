@@ -39,9 +39,9 @@ else:
     torch.set_default_tensor_type('torch.FloatTensor')
 
 
-FDDB_IMG_DIR = os.path.join(cfg.FDDB_DIR, 'images')
-FDDB_FOLD_DIR = os.path.join(cfg.FDDB_DIR, 'FDDB-folds')
-FDDB_RESULT_DIR = os.path.join(cfg.FDDB_DIR, 's3fd')
+FDDB_IMG_DIR = os.path.join(cfg.FACE.FDDB_DIR, 'images')
+FDDB_FOLD_DIR = os.path.join(cfg.FACE.FDDB_DIR, 'FDDB-folds')
+FDDB_RESULT_DIR = os.path.join(cfg.FACE.FDDB_DIR, 's3fd')
 FDDB_RESULT_IMG_DIR = os.path.join(FDDB_RESULT_DIR, 'images')
 
 if not os.path.exists(FDDB_RESULT_IMG_DIR):

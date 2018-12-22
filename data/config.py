@@ -35,7 +35,9 @@ _C.anchor_sampling = True
 _C.filter_min_face = True
 
 # train config
-_C.LR_STEPS = (120, 198, 250)
+#_C.LR_STEPS = (120, 198, 250)
+_C.MAX_STEPS = 200000
+_C.LR_STEPS = (80000,100000,120000)
 _C.EPOCHES = 300
 
 # anchor config
@@ -48,8 +50,9 @@ _C.VARIANCE = [0.1, 0.2]
 
 # detection config
 _C.NMS_THRESH = 0.3
-_C.TOP_K = 500
-_C.CONF_THRESH = 0.01
+_C.NMS_TOP_K = 5000
+_C.TOP_K = 750
+_C.CONF_THRESH = 0.05
 
 # loss config
 _C.NEG_POS_RATIOS = 3

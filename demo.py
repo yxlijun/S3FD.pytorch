@@ -53,11 +53,11 @@ def detect(net, img_path, thresh):
     img = np.array(img)
     height, width, _ = img.shape
     max_im_shrink = np.sqrt(
-        1800 * 1200 / (img.shape[0] * img.shape[1]))
+        1700 * 1200 / (img.shape[0] * img.shape[1]))
     image = cv2.resize(img, None, None, fx=max_im_shrink,
                       fy=max_im_shrink, interpolation=cv2.INTER_LINEAR)
     #image = cv2.resize(img, (640, 640))
-    x = to_chw_bgr(img)
+    x = to_chw_bgr(image)
     x = x.astype('float32')
     x -= cfg.img_mean
     x = x[[2, 1, 0], :, :]

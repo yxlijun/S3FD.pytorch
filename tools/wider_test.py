@@ -46,7 +46,7 @@ def detect_face(net, img, shrink):
         img = cv2.resize(img, None, None, fx=shrink, fy=shrink,
                          interpolation=cv2.INTER_LINEAR)
 
-    x = to_chw_bgr(image)
+    x = to_chw_bgr(img)
     x = x.astype('float32')
     x -= cfg.img_mean
     x = x[[2, 1, 0], :, :]
@@ -170,7 +170,7 @@ def get_data():
     del wider_face
 
     imgs_path = os.path.join(
-        cfg.WIDER_DIR, 'WIDER_{}'.format(subset), 'images')
+        cfg.FACE.WIDER_DIR, 'WIDER_{}'.format(subset), 'images')
     save_path = 'eval_tools/s3fd_{}'.format(subset)
 
     return event_list, file_list, imgs_path, save_path
@@ -209,7 +209,7 @@ if __name__ == '__main__':
             #                 (img.shape[0] * img.shape[1])) ** 0.5
 
             max_im_shrink = np.sqrt(
-                1650 * 1200 / (img.shape[0] * img.shape[1]))
+                1700 * 1200 / (img.shape[0] * img.shape[1]))
 
             shrink = max_im_shrink if max_im_shrink < 1 else 1
             counter += 1

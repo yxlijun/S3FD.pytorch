@@ -38,8 +38,8 @@ if use_cuda:
 else:
     torch.set_default_tensor_type('torch.FloatTensor')
 
-PASCAL_IMG_DIR = os.path.join(cfg.PASCAL_DIR, 'images')
-PASCAL_RESULT_DIR = os.path.join(cfg.PASCAL_DIR, 's3fd')
+PASCAL_IMG_DIR = os.path.join(cfg.FACE.PASCAL_DIR, 'images')
+PASCAL_RESULT_DIR = os.path.join(cfg.FACE.PASCAL_DIR, 's3fd')
 PASCAL_RESULT_IMG_DIR = os.path.join(PASCAL_RESULT_DIR, 'images')
 
 if not os.path.exists(PASCAL_RESULT_IMG_DIR):
