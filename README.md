@@ -58,6 +58,10 @@ python demo.py
 	AFW AP=99.81 paper=99.85 
 	PASCAL AP=98.77 paper=98.49
 	FDDB AP=0.975 paper=0.983
+	WIDER FACE:
+	Easy AP=0.925 paper = 0.927
+	Medium AP=0.925 paper = 0.924
+	Hard AP=0.854 paper = 0.852
 
 2. demo
 <div align="center">
