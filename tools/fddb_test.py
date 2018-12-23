@@ -50,7 +50,7 @@ if not os.path.exists(FDDB_RESULT_IMG_DIR):
 
 def detect_face(net, img, thresh):
     height, width, _ = img.shape
-    x = to_chw_bgr(image)
+    x = to_chw_bgr(img)
     x = x.astype('float32')
     x -= cfg.img_mean
     x = x[[2, 1, 0], :, :]

@@ -208,7 +208,7 @@ def vgg(cfg, i, batch_norm=False):
             else:
                 layers += [conv2d, nn.ReLU(inplace=True)]
             in_channels = v
-    conv6 = nn.Conv2d(512, 1024, kernel_size=3, padding=3, dilation=3)
+    conv6 = nn.Conv2d(512, 1024, kernel_size=3, padding=6, dilation=6)
     conv7 = nn.Conv2d(1024, 1024, kernel_size=1)
     layers += [conv6,
                nn.ReLU(inplace=True), conv7, nn.ReLU(inplace=True)]
